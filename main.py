@@ -49,7 +49,7 @@ class RandomJokes(Star):
                 except Exception as e:
                     logger.error(f"加载 {filename} 失败: {e}")
 
-    @filter.command("烂梗")
+    @filter.command("随机烂梗")
     async def random_joke(self, event: AstrMessageEvent):
         """随机一条烂梗（可指定分类）"""
         if not self.jokes:
