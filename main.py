@@ -52,7 +52,7 @@ class RandomJokes(Star):
 
         logger.info(f"🚀 烂梗插件初始化完成，成功加载 {load_success} 个分类，共 {sum(len(v) for v in self.jokes_cache.values())} 条烂梗")
 
-    @filter.command("烂梗")
+    @filter.command("烂梗",passive=True)
     async def random_joke(self, event: AstrMessageEvent):
         if not self.jokes_cache:
             yield event.plain_result("⚠️ 暂无烂梗数据，请检查 jokes_data 文件夹")
@@ -81,7 +81,7 @@ class RandomJokes(Star):
             category_name = CATEGORY_MAP.get(category_key, category_key)
             yield event.plain_result(f"🎲 随机烂梗[{category_name}]\n\n{joke}")
 
-    @filter.command("烂梗列表")
+    @filter.command("烂梗列表",passive=True)
     async def list_jokes(self, event: AstrMessageEvent):
         if not self.jokes_cache:
             yield event.plain_result("⚠️ 暂无烂梗分类数据")
