@@ -58,7 +58,7 @@ class RandomJokes(Star):
 
         logger.info(f"🚀 烂梗插件初始化完成，成功加载 {load_success} 个分类，共 {sum(len(v) for v in self.jokes_cache.values())} 条烂梗")
 
-    @filter.command("烂梗")
+    @filter.command("随机烂梗")
     async def random_joke(self, event: AstrMessageEvent):
         """随机一条烂梗（支持指定分类，不指定则全部分类随机）"""
         # 检查缓存是否为空
