@@ -1,5 +1,11 @@
-# 这是 AstrBot 插件必须的 __init__.py 配置文件
-from .main import RandomJokes
+from astrbot.api import Plugin
 
-# 导出插件类（框架靠这个找到你的插件）
-__plugin__ = RandomJokes
+class RandomJokes(Plugin):
+    def __init__(self):
+        super().__init__()
+        self.metadata = ...
+    
+    async def on_load(self):
+        ...
+
+# 这里绝对不能写 __plugin__ = RandomJokes()
