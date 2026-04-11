@@ -12,7 +12,8 @@ CATEGORY_MAP = {
     "fk-player": "喷选手篇",
     "repeat": "\"+1\"篇",
     "showtime": "群魔乱舞篇",
-    "ququ": "QUQU篇"
+    "ququ": "QUQU篇",
+    "CNCS": "群处篇"
 }
 
 @register("随机烂梗", "lapulane", "从json数组随机一条烂梗，支持提交烂梗", "1.1.0")
