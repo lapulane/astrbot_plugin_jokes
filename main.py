@@ -15,7 +15,7 @@ CATEGORY_MAP = {
     "ququ": "QUQU篇"
 }
 
-@register("随机烂梗", "lapulane", "从json数组随机一条烂梗", "1.0.1")
+@register("随机烂梗", "lapulane", "从json数组随机一条烂梗，支持提交烂梗", "1.1.0")
 class RandomJokes(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -24,8 +24,9 @@ class RandomJokes(Star):
 
     async def initialize(self):
         if not os.path.exists(self.jokes_data_dir):
-            logger.error("❌ 未找到 jokes_data 文件夹")
-            return
+            os.makedirs(self.jokes_data_dir)
+            logger.info("✅ 自动创建 jokes_data 文件夹")
+        
         json_files = [f for f in os.listdir(self.jokes_data_dir) if f.endswith(".json")]
         load_success = 0
         for file in json_files:
@@ -41,14 +42,13 @@ class RandomJokes(Star):
                 logger.error(f"❌ 加载失败 {category}: {e}")
         logger.info(f"🚀 加载完成 {load_success} 个分类，共 {sum(len(v) for v in self.jokes_cache.values())} 条烂梗")
 
-    # --------------------- 最终完美修复 ---------------------
-    @filter.command("烂梗")
+    # --------------------- 随机烂梗 ---------------------
+    @filter.command("随机烂梗")
     async def random_joke(self, event: AstrMessageEvent):
         if not self.jokes_cache:
             yield event.plain_result("⚠️ 暂无烂梗数据")
             return
 
-        # ✅ 完美！QQ 官方适配器正确 API：get_message_str()
         text = event.get_message_str().strip()
         parts = text.split(maxsplit=1)
         target_category = parts[1] if len(parts) >= 2 else None
@@ -68,13 +68,65 @@ class RandomJokes(Star):
             joke = random.choice(self.jokes_cache[category_key])
             yield event.plain_result(f"🎲 随机烂梗[{CATEGORY_MAP.get(category_key, category_key)}]\n\n{joke}")
 
+    # --------------------- 烂梗列表 ---------------------
     @filter.command("烂梗列表")
     async def list_jokes(self, event: AstrMessageEvent):
         if not self.jokes_cache:
             yield event.plain_result("⚠️ 暂无烂梗分类数据")
             return
         clist = "\n".join([f"- {v}" for v in CATEGORY_MAP.values()])
-        yield event.plain_result(f"📋 可用烂梗分类：\n{clist}\n\n使用方法：发送「/烂梗 分类名」获取指定分类的烂梗")
+        yield event.plain_result(f"📋 可用烂梗分类：\n{clist}\n\n使用示例：\n/随机烂梗 QUQU篇\n/提交烂梗 QUQU篇 这是提交的烂梗内容")
+
+    # --------------------- ✅ 新增：提交烂梗 ---------------------
+    @filter.command("提交烂梗")
+    async def add_joke(self, event: AstrMessageEvent):
+        text = event.get_message_str().strip()
+        parts = text.split(maxsplit=2)
+        
+        # 格式校验
+        if len(parts) < 3:
+            yield event.plain_result("⚠️ 格式错误！\n使用方法：/提交烂梗 分类名 烂梗内容")
+            return
+
+        _, target_category, content = parts
+        content = content.strip()
+        
+        if not content:
+            yield event.plain_result("⚠️ 烂梗内容不能为空！")
+            return
+
+        # 匹配分类（支持中文分类名）
+        category_key = next((k for k, v in CATEGORY_MAP.items() if v == target_category), None)
+        if not category_key:
+            category_key = target_category if target_category in self.jokes_cache else None
+
+        if not category_key:
+            clist = "\n".join([f"- {v}" for v in CATEGORY_MAP.values()])
+            yield event.plain_result(f"⚠️ 分类「{target_category}」不存在！\n可用分类：\n{clist}")
+            return
+
+        # 去重判断
+        if content in self.jokes_cache[category_key]:
+            yield event.plain_result(f"✅ 该烂梗已存在于「{CATEGORY_MAP[category_key]}」，无需重复提交~")
+            return
+
+        # 写入缓存
+        self.jokes_cache[category_key].append(content)
+
+        # 写入文件
+        file_path = os.path.join(self.jokes_data_dir, f"{category_key}.json")
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(self.jokes_cache[category_key], f, ensure_ascii=False, indent=2)
+            
+            show_name = CATEGORY_MAP[category_key]
+            yield event.plain_result(f"✅ 提交成功！\n分类：{show_name}\n内容：{content}\n当前分类共有 {len(self.jokes_cache[category_key])} 条烂梗")
+            logger.info(f"📝 用户提交烂梗：{category_key} - {content}")
+        
+        except Exception as e:
+            yield event.plain_result(f"❌ 保存失败：{str(e)}")
+            # 回滚缓存
+            self.jokes_cache[category_key].pop()
 
     async def terminate(self):
         self.jokes_cache.clear()
