@@ -1,4 +1,4 @@
-from astrbot.api import Plugin
+from astrbot.api.plugin import AstrBotPlugin as Plugin  # 新版，正确
 
 class RandomJokes(Plugin):
     def __init__(self):
